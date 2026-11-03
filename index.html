@@ -1053,7 +1053,7 @@ function ownersCard(){const os=L('own');return `<div class="card"><h3>Dueños de
 function vAjustes(){
  const c=S.cfg;const pend=S.outbox.length;const lim=['dueno','conta','aux'].includes(c.role);
  return storeCard()+`<div class="grid two"><div class="card"><h3>Perfil de este equipo</h3><div class="fg">
- <div class="fld w"><label for="role">Vista de este equipo</label><select id="role" data-act-change="role" ${c.tokRole&&c.tokRole!=='admin'?'disabled':''}>${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${c.role===k?'selected':''}>${v}</option>`).join('')}</select><div class="hint">Administrador: todo. Auxiliar de campo: registra y edita, no borra. Dueño: ve todo e informes, sin modificar. Este selector solo cambia lo que ves aquí; a otras personas se les da acceso con su propia clave en su equipo.${c.tokRole&&c.tokRole!=='admin'?' En este equipo el perfil lo define la clave de acceso.':''}</div></div>
+ <div class="fld w"><label for="role">Vista de este equipo</label><select id="role" data-act-change="role" ${c.tokRole&&c.tokRole!=='admin'?'disabled':''}>${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${c.role===k?'selected':''}>${v}</option>`).join('')}</select><div class="hint">Administrador de la app: todo y valida. Auxiliar de mina: registra solo en sus máquinas, no borra. Dueño: solo ve. Este selector solo cambia lo que ves aquí; a otras personas se les da acceso con su propia clave en su equipo.${c.tokRole&&c.tokRole!=='admin'?' En este equipo el perfil lo define la clave de acceso.':''}</div></div>
  <div class="fld w"><label for="pin">PIN de administrador</label><input id="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="${c.pin?'PIN guardado (escribe uno nuevo para cambiarlo)':'Sin PIN'}" value="" ${S.cfg.role!=='admin'?'disabled':''}><div class="hint">Se pide para volver a Administrador desde otro perfil.</div></div>
  </div><div class="bar" style="margin-top:12px"><button class="btn pri" data-act="savePin">Guardar PIN</button></div></div>
  <div class="card"><h3>Sincronización con Google Drive</h3>
@@ -1870,7 +1870,7 @@ const NEWC=[];
 const SRV_MIN=20261027;let MANIF_OK=false;
 const manifest=()=>{const m={};COLLS.forEach(c=>{const o={};(S[c]||[]).forEach(r=>{if(r.id)o[r.id]=r.del?-(r.upd||1):(r.upd||0)});m[c]=o});return m};
 const srvOld=()=>!!(S.cfg.url&&S.cfg.tokRole&&(S.cfg.srvVer||0)<SRV_MIN);
-const COLLS=['mov','rh','rs','rc','rcort','maq','cli','cob','fnd','fmov','cats'];
+const COLLS=['mov','rh','rs','rc','rcort','maq','cli','cob','fnd','fmov','cats','aux'];
 function migrate(){
  COLLS.forEach(c=>{if(!Array.isArray(S[c]))S[c]=[]});if(!Array.isArray(S.outbox))S.outbox=[];
  S.cfg=Object.assign({role:'admin',pin:'',url:'',token:'',device:uid(),sheetUrl:'',pct:{ter:20,emp:8,com:2,adm:3},presMina:0},S.cfg||{});
@@ -1965,7 +1965,7 @@ async function sync(manual){
    if(!up&&!S.outbox.some(o=>!unk(o.c)))break;
   }
   const since=Date.now()-(S.cfg.lastReport||0);
-  if(canPush()&&(((got||sent)&&since>600000)||since>3600e3||(manual&&(got||sent)))){try{await api('report',{data:buildReport()});S.cfg.lastReport=Date.now()}catch(e){}}
+  if(canPush()&&S.cfg.tokRole==='admin'&&(((got||sent)&&since>600000)||since>3600e3||(manual&&(got||sent)))){try{await api('report',{data:buildReport()});S.cfg.lastReport=Date.now()}catch(e){}}
   save();if(manual)toast(srvOld()&&S.cfg.tokRole==='admin'?'El Apps Script está desactualizado: pega el Code.gs más reciente y crea una nueva versión.':got||sent?`Sincronizado: ${sent} enviados, ${got} recibidos`:'Todo al día con Drive');
  }catch(e){S.cfg.syncErr=e.message||'Error';save();if(manual)toast(S.cfg.syncErr)}
  SYNCING=false;render();
@@ -2224,7 +2224,7 @@ function vCampo(){
  if(!m)return `<div class="card"><div class="empty">Todavía no hay máquinas. Pide al administrador que las registre${S.cfg.url?' y toca “Enviar y recibir”':''}.</div>${S.cfg.url?`<div class="bar" style="justify-content:center"><button class="btn pri" data-act="sync">${ic('sync')}Enviar y recibir</button></div>`:''}</div>`;
  const op=LM('rh',m.id).filter(enCurso)[0];const hoy=today();const jh=LM('rh',m.id).filter(r=>r.fecha===hoy);
  const B=(act,icon,col,lab,sub)=>`<button class="big-ic" data-act="${act}"><span class="bc" style="background:${col}">${ic(icon)}</span><b>${lab}</b>${sub?`<small>${sub}</small>`:''}</button>`;
- return `<div class="card camq"><button class="camq-b" data-act="cmSel"><span class="avatar">${mqImg(m)}</span><span style="flex:1;min-width:0;text-align:left"><small class="mut">Máquina</small><b>${esc(m.maq)}</b>${mqList().filter(x=>!x.inactivo).length>1?'<small class="mut">Toca para cambiar</small>':''}</span></button>
+ return `<div class="card camq"><button class="camq-b" data-act="cmSel"><span class="avatar">${mqImg(m)}</span><span style="flex:1;min-width:0;text-align:left"><small class="mut">${S.cfg.auxId&&auxName(S.cfg.auxId)?esc(auxName(S.cfg.auxId))+' · ':''}Máquina</small><b>${esc(m.maq)}</b>${mqList().filter(x=>!x.inactivo).length>1?'<small class="mut">Toca para cambiar</small>':''}</span></button>
  <div class="cstat ${!S.cfg.url?'':n?'wa':'ok'}">${!S.cfg.url?'Guardado en este celular':n?`${n} registro${n===1?'':'s'} por enviar${on?'':' · sin señal'}`:'Todo enviado'}</div></div>
  ${op?`<div class="al in" style="margin:0 0 14px"><i></i><div>Jornada en curso desde el horómetro <b>${f1(op.hi)}</b> (${fdl(op.fecha)}).</div></div>`:jh.length?`<div class="al ok" style="margin:0 0 14px"><i></i><div>Hoy: ${jh.map(r=>enCurso(r)?'en curso':f1(r.horas)+' h').join(', ')}</div></div>`:''}
  <div class="big-grid">
@@ -2306,7 +2306,7 @@ function vValidar(){const p=pendVal();
  return `<div class="card"><h3>Registros por validar<span class="r mut">${p.length}</span></h3><p class="note" style="margin:0 0 12px">Lo que envían los auxiliares de mina queda aquí hasta que lo revises. Puedes corregirlo antes de validarlo.</p>
  ${p.length?`<div class="bar" style="margin-bottom:10px"><button class="btn sm pri edit-only" data-act="valAll">${ic('ok')}Validar todo (${p.length})</button></div>`+p.map(({c,r})=>{const m=mqById(mqOf(r));const t=c==='rh'?(enCurso(r)?'Jornada en curso · inicio '+f1(r.hi):r.horas>0?`Jornada ${f1(r.hi)} → ${f1(r.hf)} · ${f1(r.horas)} h`:'Novedad'):c==='rs'?`${r.tipo}: ${r.concepto} · ${fmt(r.valor)}`:`${r.tipo} ${r.cant?f1(r.cant)+' gal':''} · ${fmt(r.valor)}`;
   const fotos=['','2','3'].filter(x=>r['foto'+x]).map(x=>`<button class="ib" data-act="foto" data-id="${esc(r['foto'+x])}"${r['fotoDrive'+x]?` data-drive="${esc(r['fotoDrive'+x])}"`:''} title="Ver foto">${ic('cam')}</button>`).join('');
-  return `<div class="vrow"><div style="min-width:0;flex:1"><b>${esc(m.maq)}</b> · ${fdl(r.fecha)}<div>${esc(t)}</div>${r.obs?`<div class="mut" style="font-size:13px">${esc(r.obs)}</div>`:''}</div><div class="acts">${fotos}<button class="ib edit-only" data-act="edit" data-c="${c}" data-id="${r.id}" title="Corregir">${ic('edit')}</button><button class="btn sm pri edit-only" data-act="valOne" data-c="${c}" data-id="${r.id}">${ic('ok')}Validar</button></div></div>`}).join(''):'<div class="al ok"><i></i><div>Todo validado.</div></div>'}</div>`;
+  return `<div class="vrow"><div style="min-width:0;flex:1"><b>${esc(m.maq)}</b> · ${fdl(r.fecha)}${r.aux?` · <span class="mut">${esc(auxName(r.aux)||'Auxiliar')}</span>`:''}<div>${esc(t)}</div>${r.obs?`<div class="mut" style="font-size:13px">${esc(r.obs)}</div>`:''}</div><div class="acts">${fotos}<button class="ib edit-only" data-act="edit" data-c="${c}" data-id="${r.id}" title="Corregir">${ic('edit')}</button><button class="btn sm pri edit-only" data-act="valOne" data-c="${c}" data-id="${r.id}">${ic('ok')}Validar</button></div></div>`}).join(''):'<div class="al ok"><i></i><div>Todo validado.</div></div>'}</div>`;
 }
 Object.assign(ACT,{
  wz:()=>wzStart('jor'),wzNov:()=>wzStart('nov'),wzRs:()=>wzStart('rs'),wzRc:()=>wzStart('rc'),
@@ -2335,7 +2335,7 @@ async function invitar(){
  window.__KEYS=j.keys||{};
  $('#sheet').classList.add('wide');
  $('#sheet').innerHTML=`<div class="sh"><h2>Invitar personas</h2><button class="ib" data-act="close" aria-label="Cerrar">${ic('x')}</button></div><div class="sbd"><p class="note" style="margin:0 0 12px">Cada persona abre su enlace (o escanea el QR) en su celular o PC: la app queda conectada con su perfil. Luego la instala en la pantalla de inicio.</p><div class="grid inv-g">
- ${card('aux','Auxiliar de mina','Registra jornadas, novedades, repuestos y combustible con botones grandes. No borra.')}
+ <div class="inv"><b>Auxiliar de mina</b><small class="mut">Cada auxiliar tiene su propio enlace y solo ve sus máquinas.</small><div class="bar" style="margin-top:10px"><button class="btn sm pri" data-act="goAux">${ic('user')}Ver auxiliares</button></div></div>
  ${card('conta','Dueño','Ve el panel, las máquinas y los informes. No modifica nada.')}
  ${card('admin','Administrador de la app','Todo: valida lo que envían los auxiliares, corrige y genera informes.')}</div></div>`;
  $('#modal').hidden=false;
@@ -2343,7 +2343,7 @@ async function invitar(){
 const invUrl=r=>invLink((window.__KEYS||{})[r]||'',r==='aux'?($('#invM')?.value||''):'');
 const invMsg=r=>`Hola. Este es tu acceso al Tablero de Maquinaria como ${ROLES[r]}.\n1. Abre este enlace en tu celular: ${invUrl(r)}\n2. Instálala: en iPhone, Safari → Compartir → Agregar a inicio. En Android, Chrome → ⋮ → Instalar aplicación.\nFunciona sin señal: lo que registres se envía cuando haya internet.`;
 Object.assign(ACT,{
- invitar:()=>invitar(),
+ invitar:()=>invitar(),goAux:()=>{closeModal();go('ajustes');setTimeout(()=>document.querySelector('[data-act=newAux]')?.scrollIntoView({behavior:'smooth',block:'center'}),120)},
  invWa:d=>{window.open('https://wa.me/?text='+encodeURIComponent(invMsg(d.r)),'_blank','noopener')},
  invCp:d=>copyText(invMsg(d.r)),
  invQr:async d=>{const box=$('#qr_'+d.r);try{await loadJs('https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js');const q=qrcode(0,'M');q.addData(invUrl(d.r));q.make();box.innerHTML=q.createSvgTag({cellSize:5,margin:2,scalable:true});box.style.display='block'}catch(e){toast('Se necesita señal para generar el QR')}},
@@ -2360,6 +2360,37 @@ function storeCard(){const c=S.cfg;const drive=!!c.url||c.modo==='drive';if(c.ur
  <button class="stc ${drive?'on':''}" data-act="modoDrive"><b>Google Drive</b><small>Varios equipos comparten la información. Fotos, soportes e informes quedan en una carpeta del Drive y los datos en un Sheet.</small></button></div>
  ${c.tokRole==='admin'?`<div class="bar" style="margin-top:12px"><button class="btn pri" data-act="invitar">${ic('link')}Invitar personas: auxiliares de mina y dueño</button></div>`:drive&&!c.url?'<p class="note" style="margin:12px 0 0">Pega abajo el enlace del servicio y tu clave, o abre el enlace de invitación que te enviaron.</p>':''}</div>`}
 {const ml=ACT.modoLocal;ACT.modoLocal=()=>{if(!S.cfg.url){S.cfg.modo='local';save();render();toast('Modo: solo este equipo');return}ml()}}
+/* ---- auxiliares de mina con clave propia ---- */
+{const a0=applyScope;applyScope=function(j){a0(j);if(j&&j.role&&'aux' in j)S.cfg.auxId=j.aux||''}}
+{const a1=allItems;allItems=function(){const a=a1();return S.cfg.tokRole==='aux'?a.filter(x=>['rh','rs','rc'].includes(x.c)):a}}
+const auxName=id=>byId('aux',id)?.nombre||'';
+function formAux(rec={}){const ms=mqList();
+ openForm({title:rec.id?'Editar auxiliar de mina':'Nuevo auxiliar de mina',rec,fields:[{k:'nombre',l:'Nombre',v:rec.nombre,req:1,w:1},{k:'tel',l:'Celular (WhatsApp)',t:'tel',v:rec.tel},{k:'mqs',l:'Máquinas que maneja',t:'checks',opts:ms.map(m=>[m.id,m.maq]),v:rec.mqs||[],w:1,hint:'Solo verá y registrará en estas máquinas.'},{k:'inactivo',l:'Acceso',t:'select',opts:[['','Activo'],['1','Desactivado (ya no trabaja)']],v:rec.inactivo?'1':''}],
+ save:v=>{if(!v.mqs.length){toast('Marca al menos una máquina');return false}v.inactivo=v.inactivo==='1';upsert('aux',Object.assign({id:rec.id},v));return rec.id?'Auxiliar guardado':'Auxiliar creado. Ahora envíale su invitación.'}});
+}
+function auxCard(){if(S.cfg.role!=='admin')return '';const as=L('aux').slice().sort((a,b)=>(!!a.inactivo-!!b.inactivo)||String(a.nombre).localeCompare(String(b.nombre)));
+ return `<div class="card"><h3>Auxiliares de mina<span class="r"><button class="btn sm edit-only" data-act="newAux">${ic('plus')}Nuevo auxiliar</button></span></h3><p class="note" style="margin:0 0 12px">Cada auxiliar tiene su propia clave y solo ve y registra en las máquinas que le asignes. Sus registros quedan con su nombre.</p>
+ ${as.length?as.map(a=>`<div class="vrow"><div style="flex:1;min-width:0"><b>${esc(a.nombre)}</b>${a.inactivo?' <span class="tag ba">Desactivado</span>':''}<div class="mut" style="font-size:13px">${esc((a.mqs||[]).map(id=>byId('maq',id)?.maq).filter(Boolean).join(', ')||'Sin máquinas')}</div></div><div class="acts">${a.inactivo?'':`<button class="btn sm pri" data-act="auxInv" data-id="${a.id}">${ic('send')}Invitar</button>`}<button class="ib edit-only" data-act="edit" data-c="aux" data-id="${a.id}" title="Editar">${ic('edit')}</button></div></div>`).join(''):'<div class="empty">Sin auxiliares. Crea uno por cada persona que registra en la mina.</div>'}</div>`}
+async function auxInv(id,reset){const a=byId('aux',id);if(!a)return;
+ if(!S.cfg.url||S.cfg.tokRole!=='admin'){toast('Conecta esta app al Drive con la clave de administrador');return}
+ if(!navigator.onLine){toast('Se necesita señal para generar la invitación');return}
+ toast('Preparando invitación…');let j;try{if(S.outbox.length)await sync(false);j=await api('auxKey',{id,reset:!!reset})}catch(e){toast(e.message);return}
+ const url=invLink(j.key,(a.mqs||[])[0]||'');const msg=`Hola ${a.nombre}. Este es tu acceso al Tablero de Maquinaria como auxiliar de mina (${(a.mqs||[]).map(x=>byId('maq',x)?.maq).filter(Boolean).join(', ')}).\n1. Abre este enlace en tu celular con señal: ${url}\n2. Instálala: en Android, Chrome → ⋮ → Instalar aplicación. En iPhone, Safari → Compartir → Agregar a inicio.\nFunciona sin señal: lo que registres se envía cuando haya internet.`;
+ window.__AUXMSG=msg;window.__AUXURL=url;
+ $('#sheet').classList.remove('wide');
+ $('#sheet').innerHTML=`<div class="sh"><h2>Invitar a ${esc(a.nombre)}</h2><button class="ib" data-act="close" aria-label="Cerrar">${ic('x')}</button></div><div class="sbd">
+ <p class="note" style="margin:0 0 12px">El enlace es personal: no lo compartas con otras personas. Si se pierde el celular o deja de trabajar, genera una clave nueva o desactívalo.</p>
+ <div class="bar"><a class="btn pri" target="_blank" rel="noopener" href="https://wa.me/${String(a.tel||'').replace(/\D/g,'').replace(/^(3\d{9})$/,'57$1')}?text=${encodeURIComponent(msg)}">${ic('send')}WhatsApp</a><button class="btn gh" data-act="auxCp">${ic('copy')}Copiar mensaje</button><button class="btn gh" data-act="auxQr">QR</button><button class="btn gh" data-act="auxNew" data-id="${id}">Generar clave nueva</button></div><div class="qr" id="qr_auxp"></div></div>`;
+ $('#modal').hidden=false;
+}
+Object.assign(ACT,{
+ newAux:()=>formAux(),auxInv:d=>auxInv(d.id),
+ auxNew:d=>confirmBox('¿Generar una clave nueva?','La invitación anterior deja de funcionar. Tendrás que enviarle la nueva.',()=>auxInv(d.id,true)),
+ auxCp:()=>copyText(window.__AUXMSG||''),
+ auxQr:async()=>{const box=$('#qr_auxp');try{await loadJs('https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js');const q=qrcode(0,'M');q.addData(window.__AUXURL||'');q.make();box.innerHTML=q.createSvgTag({cellSize:5,margin:2,scalable:true});box.style.display='block'}catch(e){toast('Se necesita señal para generar el QR')}}
+});
+{const e1=ACT.edit;ACT.edit=d=>{if(d.c==='aux'){const r=byId('aux',d.id);if(r)return formAux(r)}return e1(d)}}
+{const s0=storeCard;storeCard=function(){return s0()+auxCard()}}
 
 /* ---------- arranque ---------- */
 (async()=>{

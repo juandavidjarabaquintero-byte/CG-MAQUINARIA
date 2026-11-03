@@ -13,10 +13,14 @@ Abrir la app → Ajustes → **Solo en este equipo**. Todo queda guardado en ese
 3. **Implementar → Nueva implementación → Aplicación web** · Ejecutar como: Yo · Acceso: Cualquier usuario → copiar la URL `/exec`.
 4. En la app: Ajustes → **Google Drive** → pegar la URL y la clave ADM del registro de ejecución → **Guardar y conectar**.
 
-### 2. Invitar a los demás (desde la app del administrador)
-Ajustes → **Invitar personas**:
-- **Auxiliar de mina**: elegir su máquina → WhatsApp, copiar enlace o QR.
-- **Dueño**: WhatsApp, enlace o QR.
+### 2. Cargar máquinas y auxiliares (Administrador)
+- Maquinaria → **Nueva máquina** (cliente, tarifa, foto).
+- Ajustes → **Auxiliares de mina** → **Nuevo auxiliar**: nombre, celular y sus máquinas.
+
+### 3. Invitar a los demás (desde la app del administrador)
+- **Auxiliar de mina**: Ajustes → Auxiliares de mina → **Invitar** junto a su nombre → WhatsApp, copiar o QR. El enlace es personal: solo verá y registrará en sus máquinas y sus registros quedan con su nombre.
+- **Dueño**: Ajustes → **Invitar personas** → Dueño → WhatsApp, enlace o QR.
+- Si un auxiliar pierde el celular o deja de trabajar: **Generar clave nueva** o editarlo y marcar **Desactivado**.
 
 Cada persona abre su enlace en el celular: la app queda conectada con su perfil. Después la instala:
 - iPhone: Safari → Compartir → Agregar a pantalla de inicio.

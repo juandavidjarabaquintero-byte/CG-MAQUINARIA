@@ -29,13 +29,13 @@ const SCHEMA = {
   rh: {tab: 'APP Jornadas', req: ['fecha', 'hi'], cols: [
     ['Fecha', 'fecha', 'd', 1], ['Máquina', 'mq', 'mq', 1], ['Cliente u obra', '_cli', 'calc', 0], ['Tarifa por hora', 'tar', 'n', 1],
     ['Horómetro inicio', 'hi', 'n', 1], ['Horómetro final', 'hf', 'n', 1], ['Horas', 'horas', 'n', 0], ['Valor', '_val', 'calc', 0],
-    ['Operador', 'operador', 't', 1], ['Novedad', 'obs', 't', 1], ['Foto', 'fotoUrl', 'link', 0], ['Foto final', 'fotoUrl2', 'link', 0], ['Soporte novedad', 'fotoUrl3', 'link', 0]]},
+    ['Operador', 'operador', 't', 1], ['Novedad', 'obs', 't', 1], ['Foto', 'fotoUrl', 'link', 0], ['Foto final', 'fotoUrl2', 'link', 0], ['Soporte novedad', 'fotoUrl3', 'link', 0], ['Registró', '_aux', 'calc', 0]]},
   rs: {tab: 'APP Repuestos y reparaciones', req: ['fecha', 'concepto', 'valor'], cols: [
     ['Fecha', 'fecha', 'd', 1], ['Máquina', 'mq', 'mq', 1], ['Tipo', 'tipo', 't', 1], ['Concepto', 'concepto', 't', 1], ['Valor', 'valor', 'n', 1],
-    ['Lo paga', 'asume', 't', 1], ['Pagado con', '_fnd', 'calc', 0], ['Soporte', 'fotoUrl', 'link', 0]]},
+    ['Lo paga', 'asume', 't', 1], ['Pagado con', '_fnd', 'calc', 0], ['Soporte', 'fotoUrl', 'link', 0], ['Registró', '_aux', 'calc', 0]]},
   rc: {tab: 'APP Combustible', req: ['fecha', 'valor'], cols: [
     ['Fecha', 'fecha', 'd', 1], ['Máquina', 'mq', 'mq', 1], ['Tipo', 'tipo', 't', 1], ['Cantidad', 'cant', 'n', 1], ['Unidad', 'und', 't', 1],
-    ['Valor', 'valor', 'n', 1], ['Lo paga', 'asume', 't', 1], ['Horómetro', 'horo', 'n', 1], ['Pagado con', '_fnd', 'calc', 0], ['Soporte', 'fotoUrl', 'link', 0]]},
+    ['Valor', 'valor', 'n', 1], ['Lo paga', 'asume', 't', 1], ['Horómetro', 'horo', 'n', 1], ['Pagado con', '_fnd', 'calc', 0], ['Soporte', 'fotoUrl', 'link', 0], ['Registró', '_aux', 'calc', 0]]},
   rcort: {tab: 'APP Cortes', req: null, cols: [['Fecha de corte', 'fecha', 'd', 1], ['Máquina', 'mq', 'mq', 0], ['Observaciones', 'obs', 't', 1]]},
   maq: {tab: 'APP Máquinas', req: ['maq'], cols: [
     ['Máquina', 'maq', 't', 1], ['Tipo', 'tipo', 't', 1], ['Placa o serie', 'serie', 't', 1], ['Cliente actual', '_cli', 'calc', 0],
@@ -58,6 +58,7 @@ const SCHEMA = {
   fmov: {tab: 'APP Fondos movimientos', req: null, cols: [
     ['Fecha', 'fecha', 'd', 1], ['Fondo', '_fnd', 'calc', 0], ['Movimiento', '_tipo', 'calc', 0], ['Valor', 'valor', 'n', 1],
     ['Forma de pago', 'pago', 't', 1], ['Nota', 'nota', 't', 1], ['Soporte', 'fotoUrl', 'link', 0]]},
+  aux: {tab: 'APP Auxiliares', req: ['nombre'], cols: [['Nombre', 'nombre', 't', 1], ['Celular', 'tel', 't', 1], ['Máquinas', '_mqs', 'calc', 0], ['Inactivo', 'inactivo', 'bool', 1]]},
   cats: {tab: 'APP Categorías', req: null, cols: [['Rubro', '_rub', 'calc', 0], ['Categoría', 'name', 't', 0], ['Clasificación', 'nat', 'nat', 0]]},
   cfgx: {tab: 'APP Configuración', req: null, cols: [['Parámetro', 'id', 't', 0], ['Resumen', '_res', 'calc', 0]]}
 };
@@ -202,10 +203,17 @@ function doPost(e) {
     const R = ROLES[role];
     if (body.op === 'ping') return json_({ok: true, role: role, scope: R.scope, own: who.own || '', serverTime: Date.now(), ver: VERSION});
     if (body.op === 'keys') { if (role !== 'admin') return json_({ok: false, error: 'Solo el administrador puede invitar'}); const pp = PropertiesService.getScriptProperties(); return json_({ok: true, keys: {admin: pp.getProperty('TOKEN_admin'), aux: pp.getProperty('TOKEN_aux'), conta: pp.getProperty('TOKEN_conta')}}); }
-    if (body.op === 'sync') return json_(sync_(body, role, who.own));
+    if (body.op === 'sync') return json_(sync_(body, role, who.own, who.aux || ''));
+    if (body.op === 'auxKey') {
+      if (role !== 'admin') return json_({ok: false, error: 'Solo el administrador invita auxiliares'});
+      const id = String(body.id || '').trim(); if (!/^[\w.:-]{1,80}$/.test(id)) return json_({ok: false, error: 'Auxiliar inválido'});
+      const pp = PropertiesService.getScriptProperties(); let key = pp.getProperty('AUXKEY_' + id);
+      if (!key || body.reset) { key = 'AUX-' + Utilities.getUuid().replace(/-/g, '').slice(0, 12); pp.setProperty('AUXKEY_' + id, key); }
+      return json_({ok: true, key: key});
+    }
     if (body.op === 'file') { if (!R.write) return json_({ok: false, error: 'Sin permiso de escritura'}); return json_(saveFile_(body)); }
     if (body.op === 'getFile') return json_(getFile_(body));
-    if (body.op === 'report') { if (!R.write) return json_({ok: false, error: 'Sin permiso'}); renderReport_(SpreadsheetApp.openById(CFG.SHEET_ID), body.data || {}); return json_({ok: true}); }
+    if (body.op === 'report') { if (role !== 'admin') return json_({ok: false, error: 'Sin permiso'}); renderReport_(SpreadsheetApp.openById(CFG.SHEET_ID), body.data || {}); return json_({ok: true}); }
     return json_({ok: false, error: 'Operación desconocida'});
   } catch (err) {
     return json_({ok: false, error: String(err && err.message || err)});
@@ -219,8 +227,10 @@ function auth_(tok) {
   const t = String(tok).trim();
   const props = PropertiesService.getScriptProperties();
   const roles = Object.keys(ROLES);
-  for (let i = 0; i < roles.length; i++) if (props.getProperty('TOKEN_' + roles[i]) === t) return {role: roles[i], own: roles[i] === 'dueno' ? 'o1' : ''};
-  return null;
+  for (let i = 0; i < roles.length; i++) if (props.getProperty('TOKEN_' + roles[i]) === t) return {role: roles[i], own: ''};
+  const all = props.getProperties();
+  const k = Object.keys(all).filter(function (x) { return x.indexOf('AUXKEY_') === 0 && all[x] === t; })[0];
+  return k ? {role: 'aux', own: '', aux: k.slice(7)} : null;
 }
 
 // Clave de acceso de cada dueño de maquinaria. El dueño "o1" usa la clave original del dueño de la máquina.
@@ -327,6 +337,8 @@ function money_(n) { return '$' + Math.round(Number(n) || 0).toString().replace(
 
 function calc_(c, k, r, ctx) {
   if (c === 'mov' && k === '_det') return r.arrTipo ? 'Arriendo: ' + r.arrTipo + (r.arrDesc ? ' · ' + r.arrDesc : '') + (r.arrMes ? ' · ' + r.arrMes : '') : '';
+  if ((c === 'rh' || c === 'rs' || c === 'rc') && k === '_aux') { const a = ctx.aux[r.aux]; return a ? a.nombre : (r.src === 'campo' ? 'Auxiliar' : ''); }
+  if (c === 'aux' && k === '_mqs') return (r.mqs || []).map(function (id) { return ctx.maq[id] ? ctx.maq[id].maq : ''; }).filter(String).join(', ');
   if (c === 'rh' && k === '_cli') { const x = ctx.cli[r.cli]; return x ? x.nombre : ''; }
   if (c === 'rh' && k === '_val') return r.hf === '' || r.hf == null ? '' : (Number(r.horas) || 0) * tarOf_(r, ctx);
   if ((c === 'maq' || c === 'cob') && k === '_cli') { const x = ctx.cli[r.cli]; return x ? x.nombre : ''; }
@@ -402,7 +414,7 @@ function clean_(rec) {
 
 function ctx_(R) {
   const ctx = {ab: {}};
-  ['inm', 'veh', 'cab', 'per', 'eq', 'prest', 'maq', 'own', 'fnd', 'cli'].forEach(function (c) { ctx[c] = {}; (R[c] || []).forEach(function (r) { if (r.id && !r.del) ctx[c][r.id] = r; }); });
+  ['inm', 'veh', 'cab', 'per', 'eq', 'prest', 'maq', 'own', 'fnd', 'cli', 'aux'].forEach(function (c) { ctx[c] = {}; (R[c] || []).forEach(function (r) { if (r.id && !r.del) ctx[c][r.id] = r; }); });
   ctx.cs = {};
   const cs = function (id) { return ctx.cs[id] = ctx.cs[id] || {fac: 0, cob: 0}; };
   R.rh.forEach(function (r) { if (r.del || !r.cli || r.hf === '' || r.hf == null) return; cs(r.cli).fac += (Number(r.horas) || 0) * tarOf_(r, ctx); });
@@ -494,7 +506,7 @@ function writeTab_(T, recs, ctx) {
 }
 
 /* ===================== Sincronización ===================== */
-function sync_(body, role, own) {
+function sync_(body, role, own, auxId) {
   const R0 = ROLES[role];
   const lock = LockService.getScriptLock();
   lock.waitLock(28000);
@@ -524,14 +536,22 @@ function sync_(body, role, own) {
     ctx = ctx_(R);
     const seen = {}, force = {};
     let acc = 0, rej = 0;
+    let allow = null;
+    if (auxId) {
+      const a = R.aux.filter(function (x) { return x.id === auxId; })[0];
+      if (!a || a.del || isYes_(a.inactivo)) return {ok: false, error: 'Tu acceso está desactivado. Habla con el administrador de la app.'};
+      allow = {}; (a.mqs || []).forEach(function (id) { allow[id] = 1; });
+    }
     if (R0.write) (body.changes || []).forEach(function (ch) {
       const c = ch.c, rec = ch.rec;
       if (COLLS.indexOf(c) < 0 || !rec || !rec.id) return;
-      seen[c + ':' + rec.id] = 1;
       const cur = IDX[c][rec.id];
+      if (allow && (['rh', 'rs', 'rc'].indexOf(c) < 0 || !allow[mqOf_(rec)] || (cur && !allow[mqOf_(cur)]))) { rej++; force[c + ':' + rec.id] = 1; return; }
+      seen[c + ':' + rec.id] = 1;
       if (cur && (Number(cur.upd) || 0) > (Number(rec.upd) || 0)) { rej++; delete seen[c + ':' + rec.id]; force[c + ':' + rec.id] = 1; return; }
       const nr = clean_(rec); nr.srv = now;
       if (cur && cur.lk && !nr.lk) nr.lk = cur.lk;
+      if (allow && !cur) nr.aux = auxId; else if (cur && cur.aux) nr.aux = cur.aux;
       if (cur) { const i = cur.__i; Object.keys(cur).forEach(function (k) { delete cur[k]; }); Object.assign(cur, nr); cur.__i = i; }
       else { nr.__i = -1; R[c].push(nr); IDX[c][nr.id] = nr; }
       T[c].dirty = true; acc++;
@@ -544,7 +564,7 @@ function sync_(body, role, own) {
         Object.keys(m).forEach(function (id) { const v = Number(m[id]) || 0, del = v < 0, u = Math.abs(v); const cur = IDX[c][id]; if (!cur ? !del : (Number(cur.upd) || 0) < u) need.push({c: c, id: id}); });
       });
     }
-    if (acc) { ctx = ctx_(R); if (T.abonos.dirty) T.prest.dirty = true; ['inm', 'veh', 'cab', 'per', 'eq', 'prest'].forEach(function (c) { if (T[c].dirty) { T.mov.dirty = true; T.obl.dirty = true; T.abonos.dirty = true; } }); if (T.fmov.dirty || T.mov.dirty || T.rs.dirty || T.rc.dirty) T.fnd.dirty = true; if (T.fnd.dirty) { T.fmov.dirty = true; T.mov.dirty = true; T.rs.dirty = true; T.rc.dirty = true; } if (T.rh.dirty || T.cob.dirty || T.maq.dirty) T.cli.dirty = true; if (T.cli.dirty || T.maq.dirty) { T.rh.dirty = true; T.cob.dirty = true; T.maq.dirty = true; T.mov.dirty = true; } }
+    if (acc) { ctx = ctx_(R); if (T.abonos.dirty) T.prest.dirty = true; ['inm', 'veh', 'cab', 'per', 'eq', 'prest'].forEach(function (c) { if (T[c].dirty) { T.mov.dirty = true; T.obl.dirty = true; T.abonos.dirty = true; } }); if (T.fmov.dirty || T.mov.dirty || T.rs.dirty || T.rc.dirty) T.fnd.dirty = true; if (T.fnd.dirty) { T.fmov.dirty = true; T.mov.dirty = true; T.rs.dirty = true; T.rc.dirty = true; } if (T.rh.dirty || T.cob.dirty || T.maq.dirty) T.cli.dirty = true; if (T.aux.dirty || T.maq.dirty) { T.aux.dirty = true; T.rh.dirty = true; T.rs.dirty = true; T.rc.dirty = true; } if (T.cli.dirty || T.maq.dirty) { T.rh.dirty = true; T.cob.dirty = true; T.maq.dirty = true; T.mov.dirty = true; } }
     COLLS.forEach(function (c) { if (T[c].dirty) writeTab_(T[c], R[c], ctx); });
     const since = Number(body.since) || 0;
     const out = [];
@@ -556,6 +576,7 @@ function sync_(body, role, own) {
       if (own === 'o1' && !R.maq.some(function (m) { return m.id === MQ0; })) mine[MQ0] = 1;
     }
     const visible = function (c, rec) {
+      if (allow) { if (c === 'maq') return !!allow[rec.id]; if (['rh', 'rs', 'rc', 'rcort'].indexOf(c) >= 0) return !!allow[mqOf_(rec)]; if (c === 'fnd') return true; if (c === 'aux') return rec.id === auxId; return false; }
       if (!mine) return true;
       if (c === 'maq') return !!mine[rec.id];
       if (c === 'own') return rec.id === own;
@@ -573,6 +594,7 @@ function sync_(body, role, own) {
     const res = {ok: true, serverTime: now, changes: out, accepted: acc, rejected: rej, role: role, scope: R0.scope, own: own || '', colls: COLLS, ver: VERSION};
     if (body.manifest) res.need = need.slice(0, 3000);
     if (mine) res.mqs = Object.keys(mine);
+    if (allow) { res.mqs = Object.keys(allow); res.aux = auxId; }
     return res;
   } finally { lock.releaseLock(); }
 }
