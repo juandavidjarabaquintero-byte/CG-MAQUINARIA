@@ -2326,24 +2326,27 @@ Object.assign(ACT,{
 {const a0=alerts;alerts=function(){const a=a0();const n=pendVal().length;if(n&&S.cfg.role==='admin')a.unshift(['',`${n} registro${n===1?'':'s'} de los auxiliares de mina por validar.`]);return a}}
 /* ---- invitaciones por rol y modo local/Drive ---- */
 function invLink(tok,mq){const h=new URLSearchParams({u:S.cfg.url,k:tok});if(mq)h.set('m',mq);return location.href.split('#')[0]+'#conectar&'+h.toString()}
-async function invitar(){
- if(!S.cfg.url||S.cfg.tokRole!=='admin'){toast('Primero conecta esta app al Drive con la clave de administrador');return}
- if(!navigator.onLine){toast('Se necesita señal para generar las invitaciones');return}
+async function invitar(rol){
+ const sh=(t,b)=>{$('#sheet').classList.add('wide');$('#sheet').innerHTML=`<div class="sh"><h2>${t}</h2><button class="ib" data-act="close" aria-label="Cerrar">${ic('x')}</button></div><div class="sbd">${b}</div>`;$('#modal').hidden=false};
+ if(!S.cfg.url||S.cfg.tokRole!=='admin')return sh('Invitar personas',`<p style="margin:0 0 12px">Para invitar a auxiliares de mina y al dueño, la app debe estar conectada a <b>Google Drive</b>: así cada persona trabaja desde su celular y la información se junta en el Drive.</p>
+ <ol class="note" style="margin:0 0 14px;padding-left:22px"><li>En script.google.com crea un proyecto, pega <b>Code.gs</b> y ejecuta <b>configurar</b>.</li><li>Implementar → Aplicación web → copia la URL que termina en /exec.</li><li>Aquí en Ajustes → Google Drive: pega la URL y la clave ADM → Guardar y conectar.</li><li>Vuelve a tocar <b>Invitar personas</b>.</li></ol>
+ <div class="bar"><button class="btn pri" data-act="invConectar">${ic('link')}Conectar Google Drive</button></div>`);
+ if(!rol)return sh('Invitar personas',`<p class="note" style="margin:0 0 12px">¿A quién vas a invitar?</p><div class="wz-ch">
+  <button data-act="invRol" data-r="aux">${ic('clock')}Auxiliar de mina</button><button data-act="invRol" data-r="conta">${ic('eye')}Dueño</button><button data-act="invRol" data-r="admin">${ic('gear')}Administrador de la app</button></div>
+  <p class="mut" style="margin:12px 0 0;font-size:13px">Auxiliar de mina: registra solo en sus máquinas, no borra. Dueño: solo ve. Administrador: todo y valida.</p>`);
+ if(rol==='aux'){const as=L('aux').filter(a=>!a.inactivo);
+  return sh('Invitar auxiliar de mina',`<p class="note" style="margin:0 0 12px">Cada auxiliar tiene su propio enlace y solo ve y registra en sus máquinas.</p>${as.map(a=>`<div class="vrow"><div style="flex:1;min-width:0"><b>${esc(a.nombre)}</b><div class="mut" style="font-size:13px">${esc((a.mqs||[]).map(id=>byId('maq',id)?.maq).filter(Boolean).join(', '))}</div></div><button class="btn sm pri" data-act="auxInv" data-id="${a.id}">${ic('send')}Invitar</button></div>`).join('')}
+  <div class="bar" style="margin-top:12px"><button class="btn ${as.length?'gh':'pri'}" data-act="newAux">${ic('plus')}Nuevo auxiliar</button><button class="btn gh" data-act="invitar">${ic('back')}Volver</button></div>`)}
+ if(!navigator.onLine){toast('Se necesita señal para generar la invitación');return}
  let j;try{j=await api('keys')}catch(e){toast(e.message);return}
- const ms=mqList().filter(m=>!m.inactivo);
- const card=(rol,lab,desc,tok)=>`<div class="inv"><b>${lab}</b><small class="mut">${desc}</small>${rol==='aux'&&ms.length?`<div class="fld" style="margin-top:8px"><label for="invM">Máquina que maneja</label><select id="invM" data-act-change="invM"><option value="">Todas</option>${ms.map(m=>`<option value="${m.id}">${esc(m.maq)}</option>`).join('')}</select></div>`:''}<div class="bar" style="margin-top:10px"><button class="btn sm pri" data-act="invWa" data-r="${rol}">${ic('send')}WhatsApp</button><button class="btn sm gh" data-act="invCp" data-r="${rol}">${ic('copy')}Copiar enlace</button><button class="btn sm gh" data-act="invQr" data-r="${rol}">QR</button></div><div class="qr" id="qr_${rol}"></div></div>`;
  window.__KEYS=j.keys||{};
- $('#sheet').classList.add('wide');
- $('#sheet').innerHTML=`<div class="sh"><h2>Invitar personas</h2><button class="ib" data-act="close" aria-label="Cerrar">${ic('x')}</button></div><div class="sbd"><p class="note" style="margin:0 0 12px">Cada persona abre su enlace (o escanea el QR) en su celular o PC: la app queda conectada con su perfil. Luego la instala en la pantalla de inicio.</p><div class="grid inv-g">
- <div class="inv"><b>Auxiliar de mina</b><small class="mut">Cada auxiliar tiene su propio enlace y solo ve sus máquinas.</small><div class="bar" style="margin-top:10px"><button class="btn sm pri" data-act="goAux">${ic('user')}Ver auxiliares</button></div></div>
- ${card('conta','Dueño','Ve el panel, las máquinas y los informes. No modifica nada.')}
- ${card('admin','Administrador de la app','Todo: valida lo que envían los auxiliares, corrige y genera informes.')}</div></div>`;
- $('#modal').hidden=false;
+ sh('Invitar: '+ROLES[rol],`<p class="note" style="margin:0 0 12px">${rol==='conta'?'El dueño verá el panel, las máquinas, los clientes y los informes, sin poder modificar nada.':'El administrador puede registrar, corregir, borrar y validar. Compártelo solo con personas de confianza.'}</p>
+ <div class="bar"><button class="btn pri" data-act="invWa" data-r="${rol}">${ic('send')}WhatsApp</button><button class="btn gh" data-act="invCp" data-r="${rol}">${ic('copy')}Copiar mensaje</button><button class="btn gh" data-act="invQr" data-r="${rol}">QR</button><button class="btn gh" data-act="invitar">${ic('back')}Volver</button></div><div class="qr" id="qr_${rol}"></div>`);
 }
-const invUrl=r=>invLink((window.__KEYS||{})[r]||'',r==='aux'?($('#invM')?.value||''):'');
+const invUrl=r=>invLink((window.__KEYS||{})[r]||'','');
 const invMsg=r=>`Hola. Este es tu acceso al Tablero de Maquinaria como ${ROLES[r]}.\n1. Abre este enlace en tu celular: ${invUrl(r)}\n2. Instálala: en iPhone, Safari → Compartir → Agregar a inicio. En Android, Chrome → ⋮ → Instalar aplicación.\nFunciona sin señal: lo que registres se envía cuando haya internet.`;
 Object.assign(ACT,{
- invitar:()=>invitar(),goAux:()=>{closeModal();go('ajustes');setTimeout(()=>document.querySelector('[data-act=newAux]')?.scrollIntoView({behavior:'smooth',block:'center'}),120)},
+ invitar:()=>invitar(),invRol:d=>invitar(d.r),invConectar:()=>{closeModal();S.cfg.modo='drive';save();go('ajustes');setTimeout(()=>{const u=$('#surl');if(u){u.scrollIntoView({behavior:'smooth',block:'center'});u.focus()}},150)},goAux:()=>{closeModal();go('ajustes');setTimeout(()=>document.querySelector('[data-act=newAux]')?.scrollIntoView({behavior:'smooth',block:'center'}),120)},
  invWa:d=>{window.open('https://wa.me/?text='+encodeURIComponent(invMsg(d.r)),'_blank','noopener')},
  invCp:d=>copyText(invMsg(d.r)),
  invQr:async d=>{const box=$('#qr_'+d.r);try{await loadJs('https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js');const q=qrcode(0,'M');q.addData(invUrl(d.r));q.make();box.innerHTML=q.createSvgTag({cellSize:5,margin:2,scalable:true});box.style.display='block'}catch(e){toast('Se necesita señal para generar el QR')}},
@@ -2358,7 +2361,7 @@ function storeCard(){const c=S.cfg;const drive=!!c.url||c.modo==='drive';if(c.ur
  return `<div class="card"><h3>¿Dónde se guarda la información?</h3><div class="grid two st2">
  <button class="stc ${!drive?'on':''}" data-act="modoLocal"><b>Solo en este equipo</b><small>Sin cuentas ni internet. Usa “Copia de seguridad” para respaldar o pasar los datos a otro equipo.</small></button>
  <button class="stc ${drive?'on':''}" data-act="modoDrive"><b>Google Drive</b><small>Varios equipos comparten la información. Fotos, soportes e informes quedan en una carpeta del Drive y los datos en un Sheet.</small></button></div>
- ${c.tokRole==='admin'?`<div class="bar" style="margin-top:12px"><button class="btn pri" data-act="invitar">${ic('link')}Invitar personas: auxiliares de mina y dueño</button></div>`:drive&&!c.url?'<p class="note" style="margin:12px 0 0">Pega abajo el enlace del servicio y tu clave, o abre el enlace de invitación que te enviaron.</p>':''}</div>`}
+ ${c.role==='admin'?`<div class="bar" style="margin-top:12px"><button class="btn pri" data-act="invitar">${ic('link')}Invitar personas</button></div>`:''}${drive&&!c.url?'<p class="note" style="margin:12px 0 0">Pega abajo el enlace del servicio y tu clave, o abre el enlace de invitación que te enviaron.</p>':''}</div>`}
 {const ml=ACT.modoLocal;ACT.modoLocal=()=>{if(!S.cfg.url){S.cfg.modo='local';save();render();toast('Modo: solo este equipo');return}ml()}}
 /* ---- auxiliares de mina con clave propia ---- */
 {const a0=applyScope;applyScope=function(j){a0(j);if(j&&j.role&&'aux' in j)S.cfg.auxId=j.aux||''}}
@@ -2366,7 +2369,7 @@ function storeCard(){const c=S.cfg;const drive=!!c.url||c.modo==='drive';if(c.ur
 const auxName=id=>byId('aux',id)?.nombre||'';
 function formAux(rec={}){const ms=mqList();
  openForm({title:rec.id?'Editar auxiliar de mina':'Nuevo auxiliar de mina',rec,fields:[{k:'nombre',l:'Nombre',v:rec.nombre,req:1,w:1},{k:'tel',l:'Celular (WhatsApp)',t:'tel',v:rec.tel},{k:'mqs',l:'Máquinas que maneja',t:'checks',opts:ms.map(m=>[m.id,m.maq]),v:rec.mqs||[],w:1,hint:'Solo verá y registrará en estas máquinas.'},{k:'inactivo',l:'Acceso',t:'select',opts:[['','Activo'],['1','Desactivado (ya no trabaja)']],v:rec.inactivo?'1':''}],
- save:v=>{if(!v.mqs.length){toast('Marca al menos una máquina');return false}v.inactivo=v.inactivo==='1';upsert('aux',Object.assign({id:rec.id},v));return rec.id?'Auxiliar guardado':'Auxiliar creado. Ahora envíale su invitación.'}});
+ save:v=>{if(!v.mqs.length){toast('Marca al menos una máquina');return false}v.inactivo=v.inactivo==='1';const r=upsert('aux',Object.assign({id:rec.id},v));if(!rec.id&&S.cfg.url&&S.cfg.tokRole==='admin'&&navigator.onLine)setTimeout(()=>auxInv(r.id),350);return rec.id?'Auxiliar guardado':'Auxiliar creado'}});
 }
 function auxCard(){if(S.cfg.role!=='admin')return '';const as=L('aux').slice().sort((a,b)=>(!!a.inactivo-!!b.inactivo)||String(a.nombre).localeCompare(String(b.nombre)));
  return `<div class="card"><h3>Auxiliares de mina<span class="r"><button class="btn sm edit-only" data-act="newAux">${ic('plus')}Nuevo auxiliar</button></span></h3><p class="note" style="margin:0 0 12px">Cada auxiliar tiene su propia clave y solo ve y registra en las máquinas que le asignes. Sus registros quedan con su nombre.</p>
