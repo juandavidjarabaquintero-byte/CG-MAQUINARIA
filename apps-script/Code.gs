@@ -111,7 +111,7 @@ function verClaves() {
   const props = PropertiesService.getScriptProperties();
   Object.keys(ROLES).forEach(function (r) { Logger.log(ROLE_NAMES[r] + ': ' + props.getProperty('TOKEN_' + r)); });
   const all = props.getProperties();
-  Object.keys(all).filter(function (k) { return k.indexOf('OWNKEY_') === 0; }).forEach(function (k) { Logger.log('DUEÑO ' + k.slice(7) + ': ' + all[k]); });
+  Object.keys(all).filter(function (k) { return k.indexOf('AUXKEY_') === 0; }).forEach(function (k) { Logger.log('AUXILIAR DE MINA ' + k.slice(7) + ': ' + all[k]); });
 }
 
 function cambiarClaves() {
