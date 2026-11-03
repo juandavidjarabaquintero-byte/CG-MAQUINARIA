@@ -1,6 +1,6 @@
 # Tablero de Maquinaria · Instalación por rol
 
-App: https://juandavidjarabaquintero-byte.github.io/cg-maquinaria/
+App: https://juandavidjarabaquintero-byte.github.io/CG-MAQUINARIA/
 
 ## Opción A · Solo en un equipo (sin Drive)
 Abrir la app → Ajustes → **Solo en este equipo**. Todo queda guardado en ese equipo; respaldo con **Copia de seguridad**.
