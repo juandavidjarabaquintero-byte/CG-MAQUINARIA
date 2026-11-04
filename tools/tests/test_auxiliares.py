@@ -17,7 +17,7 @@ async def main():
         await A.evaluate("()=>{const c=upsert('cli',{nombre:'Mina El Oro'});const d=upsert('cli',{nombre:'Mina San Juan'});upsert('maq',{maq:'CAT 320',tipo:'Excavadora',cli:c.id,precio:180000,min:8,alerta:80});upsert('maq',{maq:'JD 310',tipo:'Retroexcavadora',cli:d.id,precio:150000,min:8,alerta:80})}")
         await A.evaluate("go('ajustes')");await A.wait_for_timeout(200)
         for nm,i in [('Ana',0),('Beto',1)]:
-            await A.click('button[data-act=newAux]');await A.wait_for_timeout(300);await A.fill('#f_nombre',nm);await A.check(f'#f_mqs input >> nth={i}');await A.click('#frm button[type=submit]');await A.wait_for_timeout(300)
+            await A.click('button[data-act=newAux]');await A.wait_for_timeout(300);await A.fill('#f_nombre',nm);await A.check(f'#f_mqs input >> nth={i}');await A.click('#frm button[type=submit]');await A.wait_for_timeout(900);await A.evaluate("closeModal()");await A.wait_for_timeout(100)
         await A.screenshot(path=D+'/out/x-aux.png',full_page=True)
         await A.evaluate("sync(true)");await A.wait_for_timeout(1500)
         links={}
@@ -44,7 +44,7 @@ async def main():
         # nueva clave para Ana
         anaKey=links['Ana'].split('&k=')[1].split('&')[0];aid=await A.evaluate("L('aux').find(a=>a.nombre==='Ana').id")
         r=post({'op':'auxKey','token':T['TOKEN_admin'],'id':aid,'reset':True});print('clave vieja',post({'op':'ping','token':anaKey}).get('error'),'| nueva',post({'op':'ping','token':r['key']}).get('role'))
-        print('sheet auxiliares',[x[:4] for x in d['APP Auxiliares']])
+        print('sheet auxiliares',[x[:4] for x in dump()['APP Auxiliares']])
         print('errores',[pg.errs for pg in [A,Ana,Beto]])
         await b.close()
 asyncio.run(main())
