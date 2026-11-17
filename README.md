@@ -4,7 +4,9 @@ App web instalable (PWA) para administrar una flota de maquinaria en alquiler: j
 
 - `index.html` · la app completa (un solo archivo).
 - `sw.js`, `manifest.webmanifest`, `icons/` · instalación y uso sin conexión.
-- `apps-script/Code.gs` · servicio opcional para guardar en Google Drive y Sheets.
+- Guardado: solo en el equipo, **Google Drive directo** (entrar con Google, un usuario en varios equipos) o **Apps Script** (`apps-script/Code.gs`, trabajo en equipo con Sheet).
 - `apps-script/INSTALAR.md` · instalación por rol.
 
 Roles: Administrador de la app (todo y valida), Auxiliar de mina (registra con botones grandes, no borra), Dueño (solo ve).
+
+Pruebas: `tools/` (simulador de Apps Script, Drive simulado y Playwright).

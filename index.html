@@ -291,7 +291,7 @@ table.pyg tr.nota td{color:var(--mut);font-style:italic}
 .wz-chips{display:flex;flex-wrap:wrap;gap:8px}.wz-chips button{border-radius:999px;border:1px solid var(--line2);background:#ffffff0a;color:inherit;font:600 15px var(--f-body);padding:10px 14px;cursor:pointer}
 .wz-kv{font-size:16px}.wz-ft .btn.big{flex:1;min-height:56px;font-size:18px;justify-content:center}
 #toast.big{font-size:18px;padding:16px 20px}
-.inv-g{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.inv{border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:4px}.qr{display:none;background:#fff;border-radius:10px;padding:8px;margin-top:10px;max-width:220px}
+.inv-g{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.inv{border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:4px}.qr{display:none;background:#fff;border-radius:10px;padding:10px;margin-top:10px;max-width:260px}
 .vrow{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #ffffff10;flex-wrap:wrap}
 .st2 .stc{text-align:left;border:2px solid var(--line2);border-radius:14px;padding:14px;background:#ffffff06;color:inherit;font:inherit;cursor:pointer;display:grid;gap:4px}.st2 .stc.on{border-color:var(--cyan);background:#2ee6f014}.st2 .stc small{color:var(--mut)}
 .fgrid{grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
@@ -1056,11 +1056,11 @@ function vAjustes(){
  <div class="fld w"><label for="role">Vista de este equipo</label><select id="role" data-act-change="role" ${c.tokRole&&c.tokRole!=='admin'?'disabled':''}>${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${c.role===k?'selected':''}>${v}</option>`).join('')}</select><div class="hint">Administrador de la app: todo y valida. Auxiliar de mina: registra solo en sus máquinas, no borra. Dueño: solo ve. Este selector solo cambia lo que ves aquí; a otras personas se les da acceso con su propia clave en su equipo.${c.tokRole&&c.tokRole!=='admin'?' En este equipo el perfil lo define la clave de acceso.':''}</div></div>
  <div class="fld w"><label for="pin">PIN de administrador</label><input id="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="${c.pin?'PIN guardado (escribe uno nuevo para cambiarlo)':'Sin PIN'}" value="" ${S.cfg.role!=='admin'?'disabled':''}><div class="hint">Se pide para volver a Administrador desde otro perfil.</div></div>
  </div><div class="bar" style="margin-top:12px"><button class="btn pri" data-act="savePin">Guardar PIN</button></div></div>
- <div class="card"><h3>Sincronización con Google Drive</h3>
+ ${c.modo==='google'||isGD()?gdCard():`<div class="card"><h3>Sincronización con Google Drive</h3>
  <div class="kv" style="margin-bottom:12px"><span>Conexión</span><span>${navigator.onLine?'<span class="tag ok">En línea</span>':'<span class="tag wa">Sin señal</span>'}</span><span>Servicio de Apps Script</span><span>${!c.tokRole?'—':srvOld()?'<span class="tag ba">Desactualizado</span>':'<span class="tag ok">Al día</span>'}</span><span>Perfil de la clave</span><span>${c.tokRole?ROLES[c.tokRole]:'—'}</span><span>Cambios por enviar</span><span>${pend}</span><span>Fotos por subir</span><span>${pendingPhotos().length}</span><span>Última sincronización</span><span>${S.lastSync?new Date(S.lastSync).toLocaleString('es-CO'):'Nunca'}</span></div>${c.syncErr?`<div class="al ba" style="margin-bottom:10px"><i></i><div>${esc(c.syncErr)}</div></div>`:''}
  <div class="fg"><div class="fld w"><label for="surl">Enlace del servicio (Apps Script)</label><input id="surl" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(c.url)}"></div><div class="fld"><label for="stok">Clave de acceso</label><input id="stok" value="${esc(c.token)}" placeholder="Ej. ADM-1a2b3c4d5e6f" autocomplete="off"></div><div class="fld"><label for="ssheet">Enlace del Sheet para el contador</label><input id="ssheet" value="${esc(c.sheetUrl)}"></div></div>
  <div class="bar" style="margin-top:12px"><button class="btn pri" data-act="saveSync">Guardar y conectar</button><button class="btn" data-act="sync">${ic('sync')}Sincronizar ahora</button>${c.tokRole==='admin'?`<button class="btn gh" data-act="resend">Enviar todo de nuevo</button>`:''}</div>
- <p class="note" style="margin:12px 0 0">Todo se guarda primero en este equipo y funciona sin internet. Al volver la señal, los cambios se envían solos al Sheet y se reciben los que se hayan hecho en el Drive.</p></div></div>
+ <p class="note" style="margin:12px 0 0">Todo se guarda primero en este equipo y funciona sin internet. Al volver la señal, los cambios se envían solos al Sheet y se reciben los que se hayan hecho en el Drive.</p></div>`}</div>
  ${lim?`<div class="card"><h3>Instalar en este dispositivo</h3>${isStandalone()?'<div class="al ok"><i></i><div>La app está instalada y funciona sin internet en este equipo.</div></div>':'<p class="note" style="margin:0">iPhone: Safari → Compartir → Agregar a pantalla de inicio. Android: Chrome → ⋮ → Instalar aplicación. PC: Chrome o Edge → ícono de instalar en la barra de direcciones.</p>'}</div>`:`<div class="grid k3"><div class="card"><h3>Respaldo</h3><div class="bar"><button class="btn" data-act="backup">${ic('dl')}Exportar respaldo</button><label class="btn" for="restore">${ic('sync')}Restaurar respaldo</label><input type="file" id="restore" accept="application/json" hidden></div><p class="note" style="margin:12px 0 0">Copia completa de los datos de este equipo en un archivo.</p></div>
  <div class="card"><h3>Instalar en este dispositivo</h3>${isStandalone()?'<div class="al ok"><i></i><div>La app está instalada y funciona sin internet en este equipo.</div></div>':`${INSTALL?`<div class="bar"><button class="btn pri" data-act="install">${ic('dl')}Instalar app</button></div>`:''}<div class="kv" style="margin-top:10px;grid-template-columns:auto 1fr"><span>iPhone / iPad</span><span style="text-align:left;font-family:var(--f-body)">Abrir en Safari → Compartir → Agregar a pantalla de inicio</span><span>Android</span><span style="text-align:left;font-family:var(--f-body)">Chrome → menú ⋮ → Instalar aplicación</span><span>PC</span><span style="text-align:left;font-family:var(--f-body)">Chrome o Edge → ícono de instalar en la barra de direcciones</span></div>`}</div>
  <div class="card"><h3>Datos de este equipo</h3><p class="note" style="margin:0 0 12px">Restablecer borra lo guardado en este equipo y lo vuelve a descargar del Drive.</p><div class="bar"><button class="btn dan del-only" data-act="reset">Restablecer datos</button></div></div></div>
@@ -2357,10 +2357,11 @@ function connectFromHash(){const h=location.hash||'';if(!h.startsWith('#conectar
  if(!u||!k||!/^(https:\/\/script\.google\.com\/|http:\/\/localhost[:\/])/.test(u)){toast('Enlace de invitación no válido');return false}
  S.cfg.url=u;S.cfg.token=k;S.cfg.tokRole='';S.cfg.scopeUrl='';S.cfg.pushedAll='';S.cfg.modo='drive';if(m)S.cfg.mqDef=m;save();
  setTimeout(async()=>{await sync(true);if(S.cfg.tokRole){S.cfg.role=S.cfg.tokRole;save();go(S.cfg.role==='aux'?'campo':'inicio');toast('Conectado como '+ROLES[S.cfg.role]+'. Ahora instala la app en la pantalla de inicio.')}},300);return true}
-function storeCard(){const c=S.cfg;const drive=!!c.url||c.modo==='drive';if(c.url&&c.tokRole&&c.tokRole!=='admin')return '';
- return `<div class="card"><h3>¿Dónde se guarda la información?</h3><div class="grid two st2">
- <button class="stc ${!drive?'on':''}" data-act="modoLocal"><b>Solo en este equipo</b><small>Sin cuentas ni internet. Usa “Copia de seguridad” para respaldar o pasar los datos a otro equipo.</small></button>
- <button class="stc ${drive?'on':''}" data-act="modoDrive"><b>Google Drive</b><small>Varios equipos comparten la información. Fotos, soportes e informes quedan en una carpeta del Drive y los datos en un Sheet.</small></button></div>
+function storeCard(){const c=S.cfg;const g=isGD()||c.modo==='google';const drive=!g&&(!!c.url||c.modo==='drive');if(c.url&&c.tokRole&&c.tokRole!=='admin')return '';
+ return `<div class="card"><h3>¿Dónde se guarda la información?</h3><div class="grid k3 st2">
+ <button class="stc ${!drive&&!g?'on':''}" data-act="modoLocal"><b>Solo en este equipo</b><small>Sin cuentas ni internet. Usa “Copia de seguridad” para respaldar o pasar los datos a otro equipo.</small></button>
+ <button class="stc ${g?'on':''}" data-act="modoGoogle"><b>Google Drive directo</b><small>Entras con tu cuenta de Google, sin instalar nada. Para ti en todos tus equipos. Datos, fotos e informes en una carpeta de tu Drive.</small></button>
+ <button class="stc ${drive?'on':''}" data-act="modoDrive"><b>Google Drive con Apps Script</b><small>Para trabajar en equipo: auxiliares de mina y dueños con su propia clave. Fotos, soportes e informes en una carpeta del Drive y los datos en un Sheet.</small></button></div>
  ${c.role==='admin'?`<div class="bar" style="margin-top:12px"><button class="btn pri" data-act="invitar">${ic('link')}Invitar personas</button></div>`:''}${drive&&!c.url?'<p class="note" style="margin:12px 0 0">Pega abajo el enlace del servicio y tu clave, o abre el enlace de invitación que te enviaron.</p>':''}</div>`}
 {const ml=ACT.modoLocal;ACT.modoLocal=()=>{if(!S.cfg.url){S.cfg.modo='local';save();render();toast('Modo: solo este equipo');return}ml()}}
 /* ---- auxiliares de mina con clave propia ---- */
@@ -2395,6 +2396,137 @@ Object.assign(ACT,{
 {const e1=ACT.edit;ACT.edit=d=>{if(d.c==='aux'){const r=byId('aux',d.id);if(r)return formAux(r)}return e1(d)}}
 {const s0=storeCard;storeCard=function(){return s0()+auxCard()}}
 
+/* ---------- Google Drive directo (sin Apps Script) ---------- */
+const GOOGLE_CLIENT_ID='';
+const GD_URL='google:drive',GD_SCOPE='https://www.googleapis.com/auth/drive.file',GD_API='https://www.googleapis.com/drive/v3/files',GD_UP='https://www.googleapis.com/upload/drive/v3/files';
+const GD_ROOT='Tablero de Maquinaria',GD_DATA='Tablero de Maquinaria · datos.json',GD_DIR='application/vnd.google-apps.folder';
+const GD_RELOGIN='Toca “Sincronizar” para volver a entrar con Google.';
+const isGD=()=>S&&S.cfg.url===GD_URL;
+const GD={g:0,tok:'',exp:0,
+ cid:()=>GOOGLE_CLIENT_ID||S.cfg.gcid||'',
+ lib(){if(window.google?.accounts?.oauth2)return Promise.resolve();if(!GD._lib)GD._lib=new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;s.onload=()=>res();s.onerror=()=>{GD._lib=null;rej(new Error('No se pudo cargar el inicio de sesión de Google. Revisa la señal.'))};document.head.appendChild(s)});return GD._lib},
+ saved(){try{const o=JSON.parse(localStorage.getItem('cgm-gtok')||'null');if(o&&o.t&&Date.now()<o.exp-60000){GD.tok=o.t;GD.exp=o.exp;return true}}catch(e){}return false},
+ drop(){GD.tok='';GD.exp=0;try{localStorage.removeItem('cgm-gtok')}catch(e){}},
+ async token(){
+  if(GD.tok&&Date.now()<GD.exp-60000)return GD.tok;
+  if(GD.saved())return GD.tok;
+  if(!GD.cid())throw new Error('Falta el ID de cliente de Google en Ajustes.');
+  if(Date.now()-GD.g>4500)throw new Error(GD_RELOGIN);
+  await GD.lib();
+  return new Promise((res,rej)=>{
+   const cl=google.accounts.oauth2.initTokenClient({client_id:GD.cid(),scope:GD_SCOPE,
+    callback:r=>{if(!r||r.error||!r.access_token)return rej(new Error('Google no dio acceso'+(r&&r.error?' ('+r.error+')':'')+'.'));
+     if(!google.accounts.oauth2.hasGrantedAllScopes(r,GD_SCOPE))return rej(new Error('Para sincronizar hay que permitir el acceso a Google Drive.'));
+     GD.tok=r.access_token;GD.exp=Date.now()+(Number(r.expires_in)||3600)*1000;try{localStorage.setItem('cgm-gtok',JSON.stringify({t:GD.tok,exp:GD.exp}))}catch(e){}
+     S.cfg.gOk=1;save();res(GD.tok)},
+    error_callback:e=>rej(new Error(e&&e.type==='popup_closed'?'Se cerró la ventana de Google sin terminar.':'No se pudo abrir la ventana de Google. Permite las ventanas emergentes e inténtalo de nuevo.'))});
+   cl.requestAccessToken(S.cfg.gOk?{prompt:''}:{});
+  });
+ },
+ async req(method,url,body,headers,raw){
+  const t=await GD.token();let r;
+  try{r=await fetch(url,{method,headers:Object.assign({Authorization:'Bearer '+t},headers||{}),body})}catch(e){throw new Error('No se pudo conectar con Google Drive. Revisa la señal.')}
+  if(r.status===401){GD.drop();throw new Error('La sesión de Google venció. '+GD_RELOGIN)}
+  if(!r.ok){let m='';try{m=(await r.json()).error.message}catch(e){}const er=new Error('Google Drive: '+(m||('error '+r.status)));er.status=r.status;throw er}
+  return raw?r:r.json();
+ },
+ q:s=>String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"),
+ async find(name,parent,dir){
+  const q=`name='${GD.q(name)}' and '${parent}' in parents and trashed=false`+(dir?` and mimeType='${GD_DIR}'`:` and mimeType!='${GD_DIR}'`);
+  const j=await GD.req('GET',GD_API+'?q='+encodeURIComponent(q)+'&spaces=drive&orderBy=createdTime&pageSize=10&fields='+encodeURIComponent('files(id,name)'));
+  return (j.files||[])[0]?.id||'';
+ },
+ async mkdir(name,parent){return (await GD.req('POST',GD_API+'?fields=id',JSON.stringify({name,mimeType:GD_DIR,parents:[parent]}),{'Content-Type':'application/json; charset=UTF-8'})).id},
+ async dir(path){
+  const c=S.cfg.gd=S.cfg.gd||{};c.f=c.f||{};
+  if(!c.root)c.root=await GD.find(GD_ROOT,'root',true)||await GD.mkdir(GD_ROOT,'root');
+  let pid=c.root,key='';
+  for(const p of path){key+='/'+p;if(!c.f[key])c.f[key]=await GD.find(p,pid,true)||await GD.mkdir(p,pid);pid=c.f[key]}
+  save();return pid;
+ },
+ async upload(name,parent,mime,content,fields){
+  const bd='cgm'+Math.random().toString(36).slice(2)+Date.now().toString(36);
+  const body=new Blob([`--${bd}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name,parents:[parent]})}\r\n--${bd}\r\nContent-Type: ${mime}\r\n\r\n`,content,`\r\n--${bd}--`]);
+  return GD.req('POST',GD_UP+'?uploadType=multipart&fields='+encodeURIComponent(fields||'id'),body,{'Content-Type':'multipart/related; boundary='+bd});
+ },
+ async dataId(){
+  const c=S.cfg.gd=S.cfg.gd||{};
+  if(c.data)return c.data;
+  const root=await GD.dir([]);
+  c.data=await GD.find(GD_DATA,root,false)||(await GD.upload(GD_DATA,root,'application/json',JSON.stringify({v:1,t:0,recs:{}}))).id;
+  save();return c.data;
+ },
+ async ver(id){return Number((await GD.req('GET',GD_API+'/'+id+'?fields=version,trashed')).version)||0},
+ async sync(b){
+  for(let i=0;i<4;i++){
+   let id=await GD.dataId(),v0;
+   try{v0=await GD.ver(id)}catch(e){if(e.status===404){S.cfg.gd={};save();continue}throw e}
+   const db=await GD.req('GET',GD_API+'/'+id+'?alt=media');db.recs=db.recs||{};db.t=Number(db.t)||0;
+   const now=Math.max(Date.now(),db.t+1),ok=c=>COLLS.includes(c)||c==='cfgx';
+   const seen={},force={};let acc=0,rej=0;
+   (b.changes||[]).forEach(ch=>{const c=ch.c,rec=ch.rec;if(!ok(c)||!rec||!rec.id)return;const R=db.recs[c]=db.recs[c]||{};const cur=R[rec.id];
+    if(cur&&(Number(cur.upd)||0)>(Number(rec.upd)||0)){rej++;force[c+':'+rec.id]=1;return}
+    R[rec.id]=Object.assign({},rec,{srv:now});seen[c+':'+rec.id]=1;acc++});
+   const need=[];
+   if(b.manifest&&typeof b.manifest==='object')Object.keys(b.manifest).forEach(c=>{if(!COLLS.includes(c))return;const m=b.manifest[c]||{},R=db.recs[c]||{};
+    Object.keys(m).forEach(id=>{const v=Number(m[id])||0,del=v<0,u=Math.abs(v),cur=R[id];if(!cur?!del:(Number(cur.upd)||0)<u)need.push({c,id})})});
+   if(acc){db.t=now;if(await GD.ver(id)!==v0)continue;await GD.req('PATCH',GD_UP+'/'+id+'?uploadType=media&fields=id',JSON.stringify(db),{'Content-Type':'application/json; charset=UTF-8'})}
+   const since=Number(b.since)||0,out=[];
+   Object.keys(db.recs).forEach(c=>{if(!ok(c))return;Object.values(db.recs[c]).forEach(rec=>{const k=c+':'+rec.id;if(seen[k])return;if(since===0||(Number(rec.srv)||0)>since||force[k])out.push({c,rec})})});
+   const res={ok:true,serverTime:db.t,changes:out,accepted:acc,rejected:rej,role:'admin',scope:'full',own:'',colls:COLLS.concat('cfgx'),ver:SRV_MIN};
+   if(b.manifest)res.need=need.slice(0,3000);
+   return res;
+  }
+  throw new Error('Otro equipo está guardando en el Drive al mismo tiempo. Intenta de nuevo en un momento.');
+ },
+ async file(b){
+  const m=String(b.data||'').match(/^data:([^;]+);base64,(.*)$/);if(!m)throw new Error('Archivo inválido');
+  const bin=atob(m[2]),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+  const fo=String(b.folder||'Otros'),d=new Date();
+  const pid=await GD.dir(fo==='Informes'?['Informes',d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')]:['Soportes',fo]);
+  const j=await GD.upload((b.prefix?b.prefix+' ':'')+(b.name||'soporte'),pid,m[1],u8,'id,webViewLink');
+  return {ok:true,fileId:j.id,url:j.webViewLink||('https://drive.google.com/file/d/'+j.id+'/view')};
+ },
+ async getFile(b){
+  if(!/^[\w-]{5,200}$/.test(String(b.fileId||'')))throw new Error('Archivo inválido');
+  const meta=await GD.req('GET',GD_API+'/'+b.fileId+'?fields=name,mimeType');
+  const blob=await (await GD.req('GET',GD_API+'/'+b.fileId+'?alt=media',null,null,true)).blob();
+  const data=await new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(blob)});
+  return {ok:true,name:meta.name,data:data.replace(/^data:[^;]*;/,'data:'+(meta.mimeType||blob.type||'application/octet-stream')+';')};
+ },
+ async api(op,p){
+  if(op==='ping'){await GD.dataId();return {ok:true,role:'admin',scope:'full',own:'',serverTime:Date.now(),ver:SRV_MIN}}
+  if(op==='sync')return GD.sync(p);
+  if(op==='file')return GD.file(p);
+  if(op==='getFile')return GD.getFile(p);
+  if(op==='report')return {ok:true};
+  throw new Error('Invitar personas necesita el servicio de Apps Script. Con Google directo solo tú usas la app, en todos tus equipos.');
+ }
+};
+['pointerdown','keydown','click'].forEach(ev=>document.addEventListener(ev,()=>{GD.g=Date.now()},true));
+{const a0=api;api=async function(op,payload={}){return S.cfg.url===GD_URL?GD.api(op,payload):a0(op,payload)}}
+function gdCard(){const c=S.cfg,on=isGD(),pend=S.outbox.length,root=c.gd&&c.gd.root;
+ return `<div class="card"><h3>Google Drive directo</h3>
+ ${on?`<div class="kv" style="margin-bottom:12px"><span>Conexión</span><span>${navigator.onLine?'<span class="tag ok">En línea</span>':'<span class="tag wa">Sin señal</span>'}</span><span>Sesión de Google</span><span>${GD.tok&&Date.now()<GD.exp-60000||GD.saved()?'<span class="tag ok">Activa</span>':'<span class="tag wa">Toca Sincronizar</span>'}</span><span>Cambios por enviar</span><span>${pend}</span><span>Fotos por subir</span><span>${pendingPhotos().length}</span><span>Última sincronización</span><span>${S.lastSync?new Date(S.lastSync).toLocaleString('es-CO'):'Nunca'}</span></div>${c.syncErr?`<div class="al ba" style="margin-bottom:10px"><i></i><div>${esc(c.syncErr)}</div></div>`:''}
+ <div class="bar"><button class="btn pri" data-act="sync">${ic('sync')}Sincronizar ahora</button>${root?`<a class="btn gh" href="https://drive.google.com/drive/folders/${esc(root)}" target="_blank" rel="noopener">${ic('link')}Abrir carpeta</a>`:''}<button class="btn gh" data-act="resend">Enviar todo de nuevo</button><button class="btn gh" data-act="gdOut">Salir de Google</button></div>`
+ :`${GOOGLE_CLIENT_ID?'':`<div class="fg"><div class="fld w"><label for="gcid">ID de cliente de Google (OAuth)</label><input id="gcid" value="${esc(c.gcid||'')}" placeholder="123456789-abc….apps.googleusercontent.com" autocomplete="off"><div class="hint">Se crea una sola vez en Google Cloud (ver guía INSTALAR.md).</div></div></div>`}
+ <div class="bar" style="margin-top:12px"><button class="btn pri" data-act="gdIn">${ic('link')}Entrar con Google</button></div>`}
+ <p class="note" style="margin:12px 0 0">Sin Apps Script: entras con tu cuenta de Google y la app guarda los datos, las fotos y los informes en la carpeta “${GD_ROOT}” de tu Drive. Sirve para ti en todos tus equipos. Para invitar auxiliares de mina y dueños usa la opción con Apps Script.</p></div>`}
+Object.assign(ACT,{
+ modoGoogle:()=>{if(S.cfg.url&&!isGD())return confirmBox('¿Cambiar a Google Drive directo?','Este equipo deja de sincronizar con el Apps Script. Lo guardado aquí se envía completo a tu Drive al entrar con Google.',()=>{S.cfg.url='';S.cfg.token='';S.cfg.tokRole='';S.cfg.modo='google';save();render()});S.cfg.modo='google';save();render();GD.lib().catch(()=>{})},
+ gdIn:async()=>{const f=$('#gcid');if(!GOOGLE_CLIENT_ID){const v=(f?.value||'').trim();if(!/^[\w-]+\.apps\.googleusercontent\.com$/.test(v)){toast('Pega el ID de cliente: termina en .apps.googleusercontent.com');f?.focus();return}S.cfg.gcid=v}
+  if(!navigator.onLine){toast('Se necesita señal para entrar con Google');return}
+  try{await GD.token()}catch(e){toast(e.message);return}
+  S.cfg.url=GD_URL;S.cfg.token='google';S.cfg.tokRole='';S.cfg.scopeUrl='';S.cfg.pushedAll='';S.cfg.modo='google';S.cfg.role='admin';save();await sync(true)},
+ gdOut:()=>confirmBox('¿Salir de Google en este equipo?','Los datos quedan en este equipo y en tu Drive. Este equipo deja de sincronizar hasta que vuelvas a entrar.',()=>{try{GD.tok&&window.google?.accounts?.oauth2?.revoke(GD.tok,()=>{})}catch(e){}GD.drop();S.cfg.url='';S.cfg.token='';S.cfg.tokRole='';S.cfg.gOk=0;S.cfg.modo='google';save();render();toast('Saliste de Google')})
+});
+{const ml=ACT.modoLocal;ACT.modoLocal=()=>{if(isGD())return confirmBox('¿Usar solo este equipo?','Este equipo deja de sincronizar con tu Drive. Lo guardado queda aquí.',()=>{GD.drop();S.cfg.url='';S.cfg.token='';S.cfg.tokRole='';S.cfg.modo='local';save();render();toast('Modo: solo este equipo')});return ml()}}
+{const md=ACT.modoDrive;ACT.modoDrive=()=>{if(isGD())return confirmBox('¿Cambiar a Google Drive con Apps Script?','Este equipo deja de sincronizar con tu Drive directo. Luego pega el enlace del servicio y tu clave.',()=>{GD.drop();S.cfg.url='';S.cfg.token='';S.cfg.tokRole='';S.cfg.modo='drive';save();render()});return md()}}
+{const i0=invitar;invitar=async function(r){if(!isGD())return i0(r);$('#sheet').classList.add('wide');$('#sheet').innerHTML=`<div class="sh"><h2>Invitar personas</h2><button class="ib" data-act="close" aria-label="Cerrar">${ic('x')}</button></div><div class="sbd"><p style="margin:0 0 12px">Con <b>Google Drive directo</b> solo tú usas la app (en todos tus equipos, con tu cuenta de Google).</p><p class="note" style="margin:0 0 14px">Para que auxiliares de mina y dueños trabajen desde su celular, usa <b>Google Drive con Apps Script</b>: cada persona recibe su clave y el servicio controla qué puede ver y registrar.</p><div class="bar"><button class="btn pri" data-act="modoDrive">Usar Apps Script</button><button class="btn gh" data-act="close">Cerrar</button></div></div>`;$('#modal').hidden=false}}
+{const x0=auxInv;auxInv=async function(id,reset){if(isGD())return invitar();return x0(id,reset)}}
+{const a1=auxCard;auxCard=function(){return isGD()||S.cfg.modo==='google'?'':a1()}}
+{const s0=sync;sync=async function(m){if(isGD()&&!m&&!GD.tok&&!GD.saved()){if(S.cfg.syncErr!==GD_RELOGIN){S.cfg.syncErr=GD_RELOGIN;save();renderStatus()}return}return s0(m)}}
+
 /* ---------- arranque ---------- */
 (async()=>{
  await DB.open();
@@ -2406,6 +2538,7 @@ Object.assign(ACT,{
  const h=(location.hash||'').slice(1).split('.');
  const inv=connectFromHash();
  if(!inv&&h[0]&&modOf(h[0]))go(h[0],h[1]);else if(S.cfg.role==='aux')go('campo');else render();
+ if(isGD()||S.cfg.modo==='google')GD.lib().catch(()=>{});
  if(!inv&&navigator.onLine&&S.cfg.url&&S.cfg.token)setTimeout(()=>sync(false),1500);
  dlNs();
 })();

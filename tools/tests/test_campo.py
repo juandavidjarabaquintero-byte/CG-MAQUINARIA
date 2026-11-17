@@ -25,6 +25,12 @@ async def main():
         m1=await A.evaluate("L('maq')[0].id")
         auxUrl=await A.evaluate("invUrl('aux')");ownUrl=await A.evaluate("invUrl('conta')");print('aux link',auxUrl[:90]+'…')
         await A.click('button[data-act=invQr][data-r=conta]');await A.wait_for_timeout(500);print('qr svg',await A.locator('#qr_conta svg').count())
+        import zxingcpp,io
+        from PIL import Image
+        await A.locator('#qr_conta').screenshot(path=D+'/out/c-qr.png')
+        for sc in (1,0.5):
+            im=Image.open(D+'/out/c-qr.png');im=im.resize((int(im.width*sc),int(im.height*sc)))
+            rr=zxingcpp.read_barcodes(im);print('qr leído',sc,len(rr)==1 and rr[0].text==ownUrl,len(ownUrl),rr[0].symbology_identifier if rr else '')
         await A.screenshot(path=D+'/out/c-invitar.png')
         # auxiliar abre su enlace
         X=await newpg(b,{'width':390,'height':844});link=PWA+'#'+auxUrl.split('#',1)[1]
